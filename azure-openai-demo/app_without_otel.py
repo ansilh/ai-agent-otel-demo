@@ -258,11 +258,19 @@ def chat(message, history):
     messages = [SystemMessage(content=SYSTEM_PROMPT)]
     
     # Add conversation history from previous turns
-    # history is a list of (user_message, assistant_message) tuples
+    # Gradio 4.x uses list of dicts: [{"role": "user", "content": "..."}, ...]
     for h in history:
-        messages.append(HumanMessage(content=h[0]))  # User's message
-        if h[1]:  # Assistant's response (may be None for current turn)
-            messages.append(AIMessage(content=h[1]))
+        if isinstance(h, dict):
+            # New Gradio format: dict with 'role' and 'content'
+            if h.get("role") == "user":
+                messages.append(HumanMessage(content=h.get("content", "")))
+            elif h.get("role") == "assistant":
+                messages.append(AIMessage(content=h.get("content", "")))
+        else:
+            # Old Gradio format: tuple (user_msg, assistant_msg)
+            messages.append(HumanMessage(content=h[0]))
+            if h[1]:
+                messages.append(AIMessage(content=h[1]))
     
     # Add the current user message
     messages.append(HumanMessage(content=message))
@@ -282,7 +290,10 @@ def chat(message, history):
         # ---------------------------------------------------------------------
         # Check if LLM wants to call tools
         if response.tool_calls:
-            # Process each tool call
+            # Add the assistant's response with tool calls ONCE before processing
+            messages.append(response)
+            
+            # Process each tool call and collect results
             for tool_call in response.tool_calls:
                 # Extract tool name and arguments
                 tool_name = tool_call["name"]
@@ -296,9 +307,7 @@ def chat(message, history):
                 else:
                     result = "Unknown tool"
                 
-                # Add tool call and result to message history
-                # This lets the LLM see what the tool returned
-                messages.append(response)  # LLM's tool call request
+                # Add tool result message (one per tool call)
                 messages.append(ToolMessage(
                     content=result,
                     tool_call_id=tool_call["id"]  # Links result to request
