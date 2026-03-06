@@ -1,16 +1,61 @@
-- Web console error 
-litellm.NotFoundError: GeminiException - { "error": { "code": 404, "message": "models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.", "status": "NOT_FOUND" } } 
-- log
-
+NFO:     127.0.0.1:34760 - "POST /run_sse HTTP/1.1" 200 OK
+22:19:08 - LiteLLM:INFO: utils.py:3898 - 
+LiteLLM completion() model= gemini-2.0-flash; provider = gemini
+2026-03-06 22:19:08,860 - INFO - utils.py:3898 - 
+LiteLLM completion() model= gemini-2.0-flash; provider = gemini
 
 Give Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new
 LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
 
-2026-03-06 22:10:43,851 - ERROR - adk_web_server.py:1643 - Error in event_generator: litellm.NotFoundError: GeminiException - {
+2026-03-06 22:19:09,537 - ERROR - adk_web_server.py:1643 - Error in event_generator: litellm.RateLimitError: litellm.RateLimitError: geminiException - {
   "error": {
-    "code": 404,
-    "message": "models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
-    "status": "NOT_FOUND"
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash\nPlease retry in 50.614786763s.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_input_token_count",
+            "quotaId": "GenerateContentInputTokensPerModelPerMinute-FreeTier",
+            "quotaDimensions": {
+              "model": "gemini-2.0-flash",
+              "location": "global"
+            }
+          },
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerMinutePerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "model": "gemini-2.0-flash",
+              "location": "global"
+            }
+          },
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            }
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "50s"
+      }
+    ]
   }
 }
 Traceback (most recent call last):
@@ -26,8 +71,8 @@ Traceback (most recent call last):
     response.raise_for_status()
   File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
     raise HTTPStatusError(message, request=request, response=self)
-httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyAB7YdyiDV5LMLeUsF3jYjZ-6Hz0oTRUJc'
-For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+httpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyAB7YdyiDV5LMLeUsF3jYjZ-6Hz0oTRUJc'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429
 
 During handling of the above exception, another exception occurred:
 
@@ -39,9 +84,53 @@ Traceback (most recent call last):
     raise VertexAIError(
 litellm.llms.vertex_ai.common_utils.VertexAIError: {
   "error": {
-    "code": 404,
-    "message": "models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
-    "status": "NOT_FOUND"
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash\nPlease retry in 50.614786763s.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_input_token_count",
+            "quotaId": "GenerateContentInputTokensPerModelPerMinute-FreeTier",
+            "quotaDimensions": {
+              "model": "gemini-2.0-flash",
+              "location": "global"
+            }
+          },
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerMinutePerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "model": "gemini-2.0-flash",
+              "location": "global"
+            }
+          },
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            }
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "50s"
+      }
+    ]
   }
 }
 
@@ -93,18 +182,62 @@ Traceback (most recent call last):
           ^^^^^^^^^^^^^^^
   File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 2398, in exception_type
     raise e
-  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 1425, in exception_type
-    raise NotFoundError(
-litellm.exceptions.NotFoundError: litellm.NotFoundError: GeminiException - {
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 1362, in exception_type
+    raise RateLimitError(
+litellm.exceptions.RateLimitError: litellm.RateLimitError: litellm.RateLimitError: geminiException - {
   "error": {
-    "code": 404,
-    "message": "models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
-    "status": "NOT_FOUND"
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash\nPlease retry in 50.614786763s.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_input_token_count",
+            "quotaId": "GenerateContentInputTokensPerModelPerMinute-FreeTier",
+            "quotaDimensions": {
+              "model": "gemini-2.0-flash",
+              "location": "global"
+            }
+          },
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerMinutePerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "model": "gemini-2.0-flash",
+              "location": "global"
+            }
+          },
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            }
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "50s"
+      }
+    ]
   }
 }
 
-INFO:     127.0.0.1:41654 - "GET /debug/trace/session/352503c1-5b82-4ace-8fc3-b1d4cd7ff1d5 HTTP/1.1" 200 OK
-2026-03-06 22:10:44,695 - ERROR - __init__.py:192 - Exception while exporting Log.
+INFO:     127.0.0.1:34760 - "GET /debug/trace/session/b110f0a7-3e96-47d2-8d57-7e04bb9faf1a HTTP/1.1" 200 OK
+2026-03-06 22:19:11,768 - ERROR - __init__.py:192 - Exception while exporting Log.
 Traceback (most recent call last):
   File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 787, in urlopen
     response = self._make_request(
@@ -251,5 +384,3 @@ Traceback (most recent call last):
   File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/requests/adapters.py", line 659, in send
     raise ConnectionError(err, request=request)
 requests.exceptions.ConnectionError: ('Connection aborted.', BadStatusLine('\x00\x00\x06\x04\x00\x00\x00\x00\x00\x00\x05\x00\x00@\x00'))
-
-
