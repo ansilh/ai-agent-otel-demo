@@ -218,7 +218,7 @@ class InstrumentedLiteLlm(LiteLlm):
 # -----------------------------------------------------------------------------
 
 # Use the instrumented LLM wrapper
-instrumented_model = InstrumentedLiteLlm(model="gemini/gemini-1.5-flash")
+instrumented_model = InstrumentedLiteLlm(model="gemini/gemini-2.0-flash")
 
 root_agent = Agent(
     name="weather_agent_otel",
