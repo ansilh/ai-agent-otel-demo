@@ -69,7 +69,7 @@ def safe_str(obj, max_length: int = 500) -> str:
 from langchain_openai import AzureChatOpenAI
 from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.agents import create_tool_calling_agent, AgentExecutor
+from langgraph.prebuilt import create_react_agent
 from langchain_core.callbacks import BaseCallbackHandler
 
 # -----------------------------------------------------------------------------
@@ -307,8 +307,7 @@ class OTELCallbackHandler(BaseCallbackHandler):
 
 tools = [get_weather, get_forecast]
 
-prompt = ChatPromptTemplate.from_messages([
-    ("system", """You are a helpful weather assistant powered by Azure OpenAI with full observability. You can:
+SYSTEM_PROMPT = """You are a helpful weather assistant powered by Azure OpenAI with full observability. You can:
 
 1. Get current weather for cities using the get_weather tool
 2. Get weather forecasts using the get_forecast tool
@@ -322,11 +321,7 @@ Available cities: Mumbai, Delhi, Bangalore, Chennai, Kolkata, Hyderabad, Pune, N
 
 Always be concise but informative in your responses.
 
-Note: All operations are being traced with OpenTelemetry for observability demonstration."""),
-    MessagesPlaceholder(variable_name="chat_history"),
-    ("human", "{input}"),
-    MessagesPlaceholder(variable_name="agent_scratchpad"),
-])
+Note: All operations are being traced with OpenTelemetry for observability demonstration."""
 
 
 # -----------------------------------------------------------------------------
@@ -358,15 +353,11 @@ async def start():
         callbacks=[OTELCallbackHandler()],
     )
     
-    # Create the agent using LangChain (open-source)
-    agent = create_tool_calling_agent(llm, tools, prompt)
-    
-    # Create the executor
-    agent_executor = AgentExecutor(
-        agent=agent,
+    # Create the agent using LangGraph (open-source)
+    agent_executor = create_react_agent(
+        model=llm,
         tools=tools,
-        verbose=True,
-        callbacks=[OTELCallbackHandler()],
+        prompt=SYSTEM_PROMPT,
     )
     
     # Store in session
@@ -415,16 +406,29 @@ async def main(message: cl.Message):
         await msg.send()
         
         try:
-            # Run the agent
-            response = await agent_executor.ainvoke({
-                "input": message.content,
-                "chat_history": chat_history,
-            })
+            # Run the agent (LangGraph uses "messages" format)
+            from langchain_core.messages import HumanMessage
+            
+            # Build messages from chat history
+            messages = []
+            for role, content in chat_history:
+                if role == "human":
+                    messages.append(HumanMessage(content=content))
+                else:
+                    from langchain_core.messages import AIMessage
+                    messages.append(AIMessage(content=content))
+            messages.append(HumanMessage(content=message.content))
+            
+            response = await agent_executor.ainvoke({"messages": messages})
             
             duration_ms = (time.time() - start_time) * 1000
             
+            # Extract the final response from LangGraph output
+            output_messages = response.get("messages", [])
+            final_response = output_messages[-1].content if output_messages else "No response"
+            
             # Record metrics and span attributes (SECURITY: redact response)
-            span.set_attribute("agent.response", safe_str(response["output"]))
+            span.set_attribute("agent.response", safe_str(final_response))
             span.set_attribute("agent.duration_ms", duration_ms)
             span.set_status(Status(StatusCode.OK))
             
@@ -432,11 +436,11 @@ async def main(message: cl.Message):
             
             # Update chat history
             chat_history.append(("human", message.content))
-            chat_history.append(("assistant", response["output"]))
+            chat_history.append(("assistant", final_response))
             cl.user_session.set("chat_history", chat_history)
             
             # Send the response
-            msg.content = response["output"]
+            msg.content = final_response
             await msg.update()
             
         except Exception as e:

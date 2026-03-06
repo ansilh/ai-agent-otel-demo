@@ -388,12 +388,12 @@ LLM ←→ MCP Client ←→ MCP Server ←→ External Systems
 **Content:**
 | Framework | Highlights |
 |-----------|------------|
-| **Google ADK** | What we'll use today |
-| LangChain/LangGraph | Popular, flexible |
+| **LangChain/LangGraph** | What we'll use today (with Azure OpenAI) |
+| Google ADK | Clean API, Gemini integration |
 | CrewAI | Multi-agent focused |
 | AutoGen | Microsoft, multi-agent |
 
-**Speaker Notes:** ADK is new, clean API, great Gemini integration.
+**Speaker Notes:** LangChain is popular and flexible, works with any LLM provider including Azure OpenAI.
 
 ---
 
@@ -402,7 +402,7 @@ LLM ←→ MCP Client ←→ MCP Server ←→ External Systems
 ### Slide 22: Section Header - Demo Time
 **Content:**
 - **Title:** Demo: Building Agents
-- **Subtitle:** Google ADK + Gemini
+- **Subtitle:** LangChain + Azure OpenAI
 
 ---
 

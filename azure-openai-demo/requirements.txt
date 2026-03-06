@@ -1,10 +1,11 @@
 # Chainlit - Open source web UI framework
 chainlit>=1.0.0
 
-# LangChain - Open source, vendor-neutral agent framework
-langchain>=0.2.0
-langchain-core>=0.2.0
-langchain-openai>=0.1.0
+# LangChain & LangGraph - Open source, vendor-neutral agent framework
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-openai>=0.2.0
+langgraph>=0.2.0
 
 # OpenTelemetry - Open source, vendor-neutral observability
 opentelemetry-api>=1.36.0,<1.39.0

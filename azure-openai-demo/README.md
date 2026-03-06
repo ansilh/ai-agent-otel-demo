@@ -28,8 +28,8 @@ This demo uses **vendor-neutral, open-source SDKs** to build an observable AI ag
 
 ```bash
 git clone https://github.com/SigNoz/signoz.git
-cd signoz/deploy
-docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d
+cd signoz/deploy/docker
+docker-compose  up -d
 ```
 
 SigNoz UI: http://localhost:3301
