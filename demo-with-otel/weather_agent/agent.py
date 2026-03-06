@@ -166,15 +166,16 @@ class InstrumentedLiteLlm(LiteLlm):
     - Model information
     """
     
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, model: str):
+        super().__init__(model=model)
+        self._model_name = model
     
     async def generate(self, *args, **kwargs):
         """
         Wrap the generate method to add tracing.
         """
         with tracer.start_as_current_span("llm_generate") as span:
-            span.set_attribute("llm.model", self.model_string)
+            span.set_attribute("llm.model", self._model_name)
             
             start_time = time.time()
             
@@ -197,8 +198,8 @@ class InstrumentedLiteLlm(LiteLlm):
                     span.set_attribute("llm.tokens.total", input_tokens + output_tokens)
                     
                     # Record metrics
-                    agent_metrics["input_tokens"].add(input_tokens, {"model": self.model_string})
-                    agent_metrics["output_tokens"].add(output_tokens, {"model": self.model_string})
+                    agent_metrics["input_tokens"].add(input_tokens, {"model": self._model_name})
+                    agent_metrics["output_tokens"].add(output_tokens, {"model": self._model_name})
                     
                     logger.info(f"LLM call: input={input_tokens}, output={output_tokens}, latency={duration_ms:.2f}ms")
                 
@@ -217,7 +218,7 @@ class InstrumentedLiteLlm(LiteLlm):
 # -----------------------------------------------------------------------------
 
 # Use the instrumented LLM wrapper
-instrumented_model = InstrumentedLiteLlm(model_string="gemini/gemini-1.5-flash")
+instrumented_model = InstrumentedLiteLlm(model="gemini/gemini-1.5-flash")
 
 root_agent = Agent(
     name="weather_agent_otel",

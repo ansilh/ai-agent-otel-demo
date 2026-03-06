@@ -102,7 +102,7 @@ root_agent = Agent(
     
     # The LLM model to use for reasoning
     # Using Gemini 1.5 Flash for fast responses
-    model=LiteLlm(model_string="gemini/gemini-1.5-flash"),
+    model=LiteLlm(model="gemini/gemini-1.5-flash"),
     
     # System instruction that defines the agent's behavior
     # This is the "personality" and capabilities of the agent
