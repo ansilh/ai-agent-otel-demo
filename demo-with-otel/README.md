@@ -62,9 +62,15 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 ### 2. Install Dependencies
 
 ```bash
+# Install ADK first - it will pull compatible OTEL versions
 pip install google-adk google-generativeai litellm
-pip install opentelemetry-api opentelemetry-sdk
-pip install opentelemetry-exporter-otlp opentelemetry-exporter-otlp-proto-grpc
+
+# IMPORTANT: ADK requires specific OTEL versions (>=1.36.0,<1.39.0)
+# If you see version conflicts, install these specific versions:
+pip install "opentelemetry-api>=1.36.0,<1.39.0" \
+            "opentelemetry-sdk>=1.36.0,<1.39.0" \
+            "opentelemetry-exporter-otlp>=1.36.0,<1.39.0" \
+            "opentelemetry-exporter-otlp-proto-grpc>=1.36.0,<1.39.0"
 ```
 
 ### 3. Set Environment Variables
