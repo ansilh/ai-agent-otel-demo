@@ -21,23 +21,45 @@ This is the **"Black Box"** problem we'll solve in `demo-with-otel`.
 
 ## Setup
 
-### 1. Create Virtual Environment (Recommended)
+### 1. Install and Start Ollama (Local LLM)
+
+```bash
+# Install Ollama
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Pull Qwen model (choose based on your RAM)
+ollama pull qwen2.5:7b    # ~8GB RAM needed
+# ollama pull qwen2.5:14b  # ~16GB RAM needed
+# ollama pull qwen2.5:32b  # ~40GB RAM needed
+
+# Start Ollama server (runs on http://localhost:11434)
+ollama serve
+```
+
+### 2. Create Virtual Environment (Recommended)
 
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-### 2. Install Dependencies
+### 3. Install Dependencies
 
 ```bash
-pip install google-adk google-generativeai litellm
+pip install google-adk litellm
 ```
 
-### 3. Set Environment Variables
+### 4. (Optional) Use Gemini Instead
+
+If you prefer using Google's Gemini API instead of local Ollama:
 
 ```bash
 export GOOGLE_API_KEY="your-gemini-api-key"
+```
+
+Then edit `weather_agent/agent.py` and change:
+```python
+model=LiteLlm(model="gemini/gemini-2.0-flash")
 ```
 
 ## Running the Demo

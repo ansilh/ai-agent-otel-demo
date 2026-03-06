@@ -218,7 +218,10 @@ class InstrumentedLiteLlm(LiteLlm):
 # -----------------------------------------------------------------------------
 
 # Use the instrumented LLM wrapper
-instrumented_model = InstrumentedLiteLlm(model="gemini/gemini-2.0-flash")
+# Using Qwen via Ollama (local model - no rate limits!)
+# Options: qwen2.5:7b, qwen2.5:14b, qwen2.5:32b
+# Change to "gemini/gemini-2.0-flash" if using Google API
+instrumented_model = InstrumentedLiteLlm(model="ollama/qwen2.5:7b")
 
 root_agent = Agent(
     name="weather_agent_otel",

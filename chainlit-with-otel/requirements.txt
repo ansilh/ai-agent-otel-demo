@@ -1,0 +1,15 @@
+# Chainlit for web UI
+chainlit>=1.0.0
+
+# LangChain for agent framework
+langchain>=0.2.0
+langchain-core>=0.2.0
+
+# Ollama integration for local LLM
+langchain-ollama>=0.1.0
+
+# OpenTelemetry for observability
+opentelemetry-api>=1.36.0,<1.39.0
+opentelemetry-sdk>=1.36.0,<1.39.0
+opentelemetry-exporter-otlp>=1.36.0,<1.39.0
+opentelemetry-exporter-otlp-proto-grpc>=1.36.0,<1.39.0

@@ -52,18 +52,33 @@ SigNoz UI will be at: http://localhost:3301
 
 ## Setup
 
-### 1. Create Virtual Environment (Recommended)
+### 1. Install and Start Ollama (Local LLM)
+
+```bash
+# Install Ollama
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Pull Qwen model (choose based on your RAM)
+ollama pull qwen2.5:7b    # ~8GB RAM needed
+# ollama pull qwen2.5:14b  # ~16GB RAM needed
+# ollama pull qwen2.5:32b  # ~40GB RAM needed
+
+# Start Ollama server (runs on http://localhost:11434)
+ollama serve
+```
+
+### 2. Create Virtual Environment (Recommended)
 
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-### 2. Install Dependencies
+### 3. Install Dependencies
 
 ```bash
 # Install ADK first - it will pull compatible OTEL versions
-pip install google-adk google-generativeai litellm
+pip install google-adk litellm
 
 # IMPORTANT: ADK requires specific OTEL versions (>=1.36.0,<1.39.0)
 # If you see version conflicts, install these specific versions:
@@ -73,15 +88,25 @@ pip install "opentelemetry-api>=1.36.0,<1.39.0" \
             "opentelemetry-exporter-otlp-proto-grpc>=1.36.0,<1.39.0"
 ```
 
-### 3. Set Environment Variables
+### 4. Set Environment Variables
 
 ```bash
-# Required: Gemini API key
-export GOOGLE_API_KEY="your-gemini-api-key"
-
 # OTEL Configuration (defaults shown - adjust if needed)
 export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317"
 export OTEL_SERVICE_NAME="weather-agent-otel"
+```
+
+### 5. (Optional) Use Gemini Instead
+
+If you prefer using Google's Gemini API instead of local Ollama:
+
+```bash
+export GOOGLE_API_KEY="your-gemini-api-key"
+```
+
+Then edit `weather_agent/agent.py` and change:
+```python
+instrumented_model = InstrumentedLiteLlm(model="gemini/gemini-2.0-flash")
 ```
 
 ## Running the Demo
