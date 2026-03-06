@@ -1,3 +1,255 @@
-  File "/home/ansil/ai-agent-otel-demo/demo-with-otel/weather_agent/agent.py", line 170, in __init__
-    super().__init__(*args, **kwargs)
-TypeError: Fail to load 'weather_agent.agent' module. LiteLlm.__init__() missing 1 required positional argument: 'model'
+- Web console error 
+litellm.NotFoundError: GeminiException - { "error": { "code": 404, "message": "models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.", "status": "NOT_FOUND" } } 
+- log
+
+
+Give Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+2026-03-06 22:10:43,851 - ERROR - adk_web_server.py:1643 - Error in event_generator: litellm.NotFoundError: GeminiException - {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+Traceback (most recent call last):
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/litellm/llms/vertex_ai/gemini/vertex_and_google_ai_studio_gemini.py", line 2606, in async_completion
+    response = await client.post(
+               ^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/litellm/litellm_core_utils/logging_utils.py", line 297, in async_wrapper
+    result = await func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/litellm/llms/custom_httpx/http_handler.py", line 511, in post
+    raise e
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/litellm/llms/custom_httpx/http_handler.py", line 467, in post
+    response.raise_for_status()
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyAB7YdyiDV5LMLeUsF3jYjZ-6Hz0oTRUJc'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/litellm/main.py", line 613, in acompletion
+    response = await init_response
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/litellm/llms/vertex_ai/gemini/vertex_and_google_ai_studio_gemini.py", line 2615, in async_completion
+    raise VertexAIError(
+litellm.llms.vertex_ai.common_utils.VertexAIError: {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/cli/adk_web_server.py", line 1616, in event_generator
+    async for event in agen:
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/runners.py", line 565, in run_async
+    async for event in agen:
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/runners.py", line 550, in _run_with_trace
+    async for event in agen:
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/runners.py", line 782, in _exec_with_plugin
+    async for event in agen:
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/runners.py", line 539, in execute
+    async for event in agen:
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/agents/base_agent.py", line 295, in run_async
+    async for event in agen:
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/agents/llm_agent.py", line 470, in _run_async_impl
+    async for event in agen:
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 752, in run_async
+    async for event in agen:
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 829, in _run_one_step_async
+    async for llm_response in agen:
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 1186, in _call_llm_async
+    async for event in agen:
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 1169, in _call_llm_with_tracing
+    async for llm_response in agen:
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 1245, in _run_and_handle_error
+    async for response in agen:
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 389, in _run_and_handle_error
+    raise model_error
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 374, in _run_and_handle_error
+    async for llm_response in agen:
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/models/lite_llm.py", line 2148, in generate_content_async
+    response = await self.llm_client.acompletion(**completion_args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/models/lite_llm.py", line 444, in acompletion
+    return await acompletion(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/litellm/utils.py", line 2041, in wrapper_async
+    raise e
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/litellm/utils.py", line 1862, in wrapper_async
+    result = await original_function(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/litellm/main.py", line 632, in acompletion
+    raise exception_type(
+          ^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 2398, in exception_type
+    raise e
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 1425, in exception_type
+    raise NotFoundError(
+litellm.exceptions.NotFoundError: litellm.NotFoundError: GeminiException - {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+INFO:     127.0.0.1:41654 - "GET /debug/trace/session/352503c1-5b82-4ace-8fc3-b1d4cd7ff1d5 HTTP/1.1" 200 OK
+2026-03-06 22:10:44,695 - ERROR - __init__.py:192 - Exception while exporting Log.
+Traceback (most recent call last):
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 534, in _make_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/connection.py", line 571, in getresponse
+    httplib_response = super().getresponse()
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 1448, in getresponse
+    response.begin()
+  File "/usr/lib/python3.12/http/client.py", line 336, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 318, in _read_status
+    raise BadStatusLine(line)
+http.client.BadStatusLine: @
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/requests/adapters.py", line 644, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/util/retry.py", line 490, in increment
+    raise reraise(type(error), error, _stacktrace)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/util/util.py", line 38, in reraise
+    raise value.with_traceback(tb)
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 534, in _make_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/connection.py", line 571, in getresponse
+    httplib_response = super().getresponse()
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 1448, in getresponse
+    response.begin()
+  File "/usr/lib/python3.12/http/client.py", line 336, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 318, in _read_status
+    raise BadStatusLine(line)
+urllib3.exceptions.ProtocolError: ('Connection aborted.', BadStatusLine('\x00\x00\x06\x04\x00\x00\x00\x00\x00\x00\x05\x00\x00@\x00'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/opentelemetry/exporter/otlp/proto/http/_log_exporter/__init__.py", line 162, in _export
+    resp = self._session.post(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/requests/sessions.py", line 637, in post
+    return self.request("POST", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/requests/sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/requests/adapters.py", line 659, in send
+    raise ConnectionError(err, request=request)
+requests.exceptions.ConnectionError: ('Connection aborted.', BadStatusLine('\x00\x00\x06\x04\x00\x00\x00\x00\x00\x00\x05\x00\x00@\x00'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 534, in _make_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/connection.py", line 571, in getresponse
+    httplib_response = super().getresponse()
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 1448, in getresponse
+    response.begin()
+  File "/usr/lib/python3.12/http/client.py", line 336, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 318, in _read_status
+    raise BadStatusLine(line)
+http.client.BadStatusLine: @
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/requests/adapters.py", line 644, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/util/retry.py", line 490, in increment
+    raise reraise(type(error), error, _stacktrace)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/util/util.py", line 38, in reraise
+    raise value.with_traceback(tb)
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 534, in _make_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/urllib3/connection.py", line 571, in getresponse
+    httplib_response = super().getresponse()
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 1448, in getresponse
+    response.begin()
+  File "/usr/lib/python3.12/http/client.py", line 336, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 318, in _read_status
+    raise BadStatusLine(line)
+urllib3.exceptions.ProtocolError: ('Connection aborted.', BadStatusLine('\x00\x00\x06\x04\x00\x00\x00\x00\x00\x00\x05\x00\x00@\x00'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/opentelemetry/sdk/_shared_internal/__init__.py", line 179, in _export
+    self._exporter.export(
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/opentelemetry/exporter/otlp/proto/http/_log_exporter/__init__.py", line 187, in export
+    resp = self._export(serialized_data, deadline_sec - time())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/opentelemetry/exporter/otlp/proto/http/_log_exporter/__init__.py", line 170, in _export
+    resp = self._session.post(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/requests/sessions.py", line 637, in post
+    return self.request("POST", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/requests/sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/requests/adapters.py", line 659, in send
+    raise ConnectionError(err, request=request)
+requests.exceptions.ConnectionError: ('Connection aborted.', BadStatusLine('\x00\x00\x06\x04\x00\x00\x00\x00\x00\x00\x05\x00\x00@\x00'))
+
+
