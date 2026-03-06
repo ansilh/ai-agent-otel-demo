@@ -1,0 +1,13 @@
+# Chainlit - Open source web UI framework
+chainlit>=1.0.0
+
+# LangChain - Open source, vendor-neutral agent framework
+langchain>=0.2.0
+langchain-core>=0.2.0
+langchain-openai>=0.1.0
+
+# OpenTelemetry - Open source, vendor-neutral observability
+opentelemetry-api>=1.36.0,<1.39.0
+opentelemetry-sdk>=1.36.0,<1.39.0
+opentelemetry-exporter-otlp>=1.36.0,<1.39.0
+opentelemetry-exporter-otlp-proto-grpc>=1.36.0,<1.39.0

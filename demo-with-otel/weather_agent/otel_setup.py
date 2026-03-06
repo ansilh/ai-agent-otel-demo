@@ -16,7 +16,40 @@ Configuration via environment variables:
 """
 
 import os
+import re
 import logging
+
+# -----------------------------------------------------------------------------
+# Sensitive Data Redaction (CRITICAL FOR SECURITY)
+# -----------------------------------------------------------------------------
+# NEVER log API keys, tokens, or credentials in traces, metrics, or logs
+
+SENSITIVE_PATTERNS = [
+    (re.compile(r'AIza[a-zA-Z0-9_\-]{35}'), '***GOOGLE_API_KEY***'),
+    (re.compile(r'sk-[a-zA-Z0-9]{48,}'), '***OPENAI_KEY***'),
+    (re.compile(r'(?i)(api[_-]?key|key|token|secret|password|credential|auth)["\s:=]+["\']?([a-zA-Z0-9_\-]{20,})["\']?'), r'\1=***REDACTED***'),
+    (re.compile(r'(?i)(bearer\s+)([a-zA-Z0-9_\-\.]+)'), r'\1***REDACTED***'),
+    (re.compile(r'(https?://)[^:]+:[^@]+@'), r'\1***:***@'),
+    (re.compile(r'(?i)(\?|&)(api[_-]?key|key|token)=([^&\s]+)'), r'\1\2=***REDACTED***'),
+]
+
+def redact_sensitive(text: str) -> str:
+    """Redact sensitive data from text. ALWAYS use this before logging."""
+    if not text or not isinstance(text, str):
+        return text
+    result = text
+    for pattern, replacement in SENSITIVE_PATTERNS:
+        result = pattern.sub(replacement, result)
+    return result
+
+def safe_str(obj, max_length: int = 500) -> str:
+    """Convert to string with redaction and length limit."""
+    try:
+        text = str(obj)
+        redacted = redact_sensitive(text)
+        return redacted[:max_length] + '...' if len(redacted) > max_length else redacted
+    except Exception:
+        return '[UNABLE TO CONVERT]'
 
 # -----------------------------------------------------------------------------
 # OpenTelemetry Imports
@@ -190,4 +223,4 @@ agent_metrics = create_metrics(meter)
 logger = logging.getLogger("weather-agent")
 
 # Export for use in agent.py
-__all__ = ['tracer', 'meter', 'agent_metrics', 'logger', 'Status', 'StatusCode']
+__all__ = ['tracer', 'meter', 'agent_metrics', 'logger', 'Status', 'StatusCode', 'redact_sensitive', 'safe_str']

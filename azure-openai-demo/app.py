@@ -1,17 +1,19 @@
 """
 =============================================================================
-DEMO: Weather Agent using Chainlit WITH OpenTelemetry Observability
+DEMO: Weather Agent using Azure OpenAI with OpenTelemetry
 =============================================================================
 
-This is the same weather agent as chainlit-without-otel, but now instrumented
-with OpenTelemetry to capture traces, metrics, and logs.
+This demo uses:
+- LangChain (vendor-neutral, open-source) for agent framework
+- Chainlit (open-source) for web UI
+- OpenTelemetry (open-source, vendor-neutral) for observability
+- Azure OpenAI as the LLM provider
 
-The agent is now a "GLASS BOX" - we can see:
-✅ Token usage per request (input, output, total)
+The agent is a "GLASS BOX" with full observability:
+✅ Token usage per request
 ✅ Latency for each operation
 ✅ Tool calls with parameters and results
 ✅ Full request flow as traces
-✅ Errors with context
 
 Run with: chainlit run app.py
 Then open http://localhost:8000 to interact with the agent.
@@ -20,11 +22,15 @@ Check SigNoz at http://localhost:3301 to see the observability data.
 """
 
 import os
+import sys
 import time
 import re
 from functools import wraps
 
-# Chainlit provides the web chat interface
+# Add shared module to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+# Chainlit - Open source web UI framework
 import chainlit as cl
 
 # -----------------------------------------------------------------------------
@@ -59,17 +65,17 @@ def safe_str(obj, max_length: int = 500) -> str:
     except Exception:
         return '[UNABLE TO CONVERT]'
 
-# LangChain components for building the agent
-from langchain_ollama import ChatOllama
+# LangChain - Open source, vendor-neutral agent framework
+from langchain_openai import AzureChatOpenAI
 from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain_core.callbacks import BaseCallbackHandler
 
 # -----------------------------------------------------------------------------
-# OpenTelemetry Setup
+# OpenTelemetry Setup (Open Source, Vendor Neutral)
 # -----------------------------------------------------------------------------
-# Import and configure OTEL before anything else
+# OTEL is the industry standard for observability - works with any backend
 
 from opentelemetry import trace, metrics
 from opentelemetry.sdk.trace import TracerProvider
@@ -82,34 +88,45 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.trace import Status, StatusCode
 
 # Configuration from environment variables
-SERVICE_NAME = os.environ.get("OTEL_SERVICE_NAME", "chainlit-weather-agent")
+SERVICE_NAME = os.environ.get("OTEL_SERVICE_NAME", "azure-openai-weather-agent")
 OTLP_ENDPOINT = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
 
-# Create resource that identifies this service
+# Create resource that identifies this service in observability backend
 resource = Resource.create({
     "service.name": SERVICE_NAME,
     "service.version": "1.0.0",
     "deployment.environment": "demo",
+    "cloud.provider": "azure",
 })
 
-# Set up Tracing
+# Set up Tracing - traces show request flow through the system
 tracer_provider = TracerProvider(resource=resource)
 trace_exporter = OTLPSpanExporter(endpoint=OTLP_ENDPOINT, insecure=True)
 tracer_provider.add_span_processor(BatchSpanProcessor(trace_exporter))
 trace.set_tracer_provider(tracer_provider)
-tracer = trace.get_tracer("chainlit-weather-agent", "1.0.0")
+tracer = trace.get_tracer("azure-openai-weather-agent", "1.0.0")
 
-# Set up Metrics
+# Set up Metrics - numerical measurements over time
 metric_exporter = OTLPMetricExporter(endpoint=OTLP_ENDPOINT, insecure=True)
 metric_reader = PeriodicExportingMetricReader(metric_exporter, export_interval_millis=10000)
 meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
 metrics.set_meter_provider(meter_provider)
-meter = metrics.get_meter("chainlit-weather-agent", "1.0.0")
+meter = metrics.get_meter("azure-openai-weather-agent", "1.0.0")
 
 # Create metric instruments
 token_counter = meter.create_counter(
     name="agent.tokens.total",
     description="Total tokens used",
+    unit="tokens",
+)
+input_token_counter = meter.create_counter(
+    name="agent.tokens.input",
+    description="Input/prompt tokens used",
+    unit="tokens",
+)
+output_token_counter = meter.create_counter(
+    name="agent.tokens.output",
+    description="Output/completion tokens used",
     unit="tokens",
 )
 request_latency = meter.create_histogram(
@@ -134,11 +151,13 @@ def instrumented_tool(func):
     def wrapper(*args, **kwargs):
         tool_name = func.__name__
         
+        # Create a span for this tool call
         with tracer.start_as_current_span(f"tool_{tool_name}") as span:
             span.set_attribute("tool.name", tool_name)
-            # SECURITY: Redact sensitive data from inputs
+            # SECURITY: Redact sensitive data from inputs before logging
             span.set_attribute("tool.inputs", safe_str(kwargs))
             
+            # Record metric
             tool_calls_counter.add(1, {"tool": tool_name})
             
             start_time = time.time()
@@ -146,16 +165,16 @@ def instrumented_tool(func):
                 result = func(*args, **kwargs)
                 duration_ms = (time.time() - start_time) * 1000
                 
-                # SECURITY: Redact sensitive data from outputs
+                # Record result in span (SECURITY: redact sensitive data)
                 span.set_attribute("tool.output", safe_str(result))
                 span.set_attribute("tool.duration_ms", duration_ms)
                 span.set_status(Status(StatusCode.OK))
                 
                 return result
             except Exception as e:
-                # SECURITY: Redact error messages
+                # SECURITY: Redact error messages before logging
                 span.set_status(Status(StatusCode.ERROR, redact_sensitive(str(e))))
-                span.set_attribute("error.type", type(e).__name__)
+                span.record_exception(e)
                 raise
     
     return wrapper
@@ -183,6 +202,9 @@ def get_weather(city: str) -> str:
         "kolkata": "30°C, Humid, Overcast",
         "hyderabad": "29°C, Warm, Clear Skies",
         "pune": "26°C, Pleasant, Partly Cloudy",
+        "new york": "18°C, Clear, Breezy",
+        "london": "12°C, Overcast, Light Drizzle",
+        "tokyo": "22°C, Sunny, Humid",
     }
     
     city_lower = city.lower().strip()
@@ -208,6 +230,8 @@ def get_forecast(city: str, days: int = 3) -> str:
         "mumbai": ["32°C Sunny", "31°C Cloudy", "30°C Rain", "29°C Thunderstorm", "31°C Partly Cloudy"],
         "delhi": ["28°C Clear", "30°C Sunny", "29°C Hazy", "27°C Cloudy", "28°C Clear"],
         "bangalore": ["24°C Rain", "23°C Cloudy", "25°C Pleasant", "24°C Light Rain", "26°C Sunny"],
+        "new york": ["17°C Sunny", "19°C Clear", "16°C Cloudy", "15°C Rain", "18°C Partly Cloudy"],
+        "london": ["11°C Rain", "10°C Overcast", "12°C Cloudy", "13°C Partly Cloudy", "11°C Drizzle"],
     }
     
     city_lower = city.lower().strip()
@@ -217,7 +241,7 @@ def get_forecast(city: str, days: int = 3) -> str:
         forecast_str = "\n".join([f"  Day {i+1}: {f}" for i, f in enumerate(forecast_list)])
         return f"Forecast for {city.title()} (next {len(forecast_list)} days):\n{forecast_str}"
     else:
-        return f"Forecast not available for {city}. Available cities: mumbai, delhi, bangalore"
+        return f"Forecast not available for {city}. Available cities: mumbai, delhi, bangalore, new york, london"
 
 
 # -----------------------------------------------------------------------------
@@ -235,7 +259,8 @@ class OTELCallbackHandler(BaseCallbackHandler):
         """Called when LLM starts generating."""
         self.llm_start_time = time.time()
         self.current_span = tracer.start_span("llm_call")
-        self.current_span.set_attribute("llm.model", "qwen2.5:7b")
+        self.current_span.set_attribute("llm.provider", "azure_openai")
+        self.current_span.set_attribute("llm.model", "gpt-5.2")
         self.current_span.set_attribute("llm.prompt_length", sum(len(p) for p in prompts))
     
     def on_llm_end(self, response, **kwargs):
@@ -244,17 +269,22 @@ class OTELCallbackHandler(BaseCallbackHandler):
             duration_ms = (time.time() - self.llm_start_time) * 1000
             self.current_span.set_attribute("llm.duration_ms", duration_ms)
             
-            # Try to get token usage from response
+            # Extract token usage from Azure OpenAI response
             if hasattr(response, 'llm_output') and response.llm_output:
                 token_usage = response.llm_output.get('token_usage', {})
                 input_tokens = token_usage.get('prompt_tokens', 0)
                 output_tokens = token_usage.get('completion_tokens', 0)
+                total_tokens = token_usage.get('total_tokens', input_tokens + output_tokens)
                 
+                # Record in span
                 self.current_span.set_attribute("llm.tokens.input", input_tokens)
                 self.current_span.set_attribute("llm.tokens.output", output_tokens)
-                self.current_span.set_attribute("llm.tokens.total", input_tokens + output_tokens)
+                self.current_span.set_attribute("llm.tokens.total", total_tokens)
                 
-                token_counter.add(input_tokens + output_tokens, {"model": "qwen2.5:7b"})
+                # Record metrics
+                input_token_counter.add(input_tokens, {"model": "gpt-5.2", "provider": "azure"})
+                output_token_counter.add(output_tokens, {"model": "gpt-5.2", "provider": "azure"})
+                token_counter.add(total_tokens, {"model": "gpt-5.2", "provider": "azure"})
             
             self.current_span.set_status(Status(StatusCode.OK))
             self.current_span.end()
@@ -263,8 +293,9 @@ class OTELCallbackHandler(BaseCallbackHandler):
     def on_llm_error(self, error, **kwargs):
         """Called when LLM encounters an error."""
         if self.current_span:
-            # SECURITY: Redact error messages - they may contain API keys
+            # SECURITY: Redact error messages - they may contain API keys in URLs
             self.current_span.set_status(Status(StatusCode.ERROR, redact_sensitive(str(error))))
+            # Don't record full exception - it may contain sensitive data
             self.current_span.set_attribute("error.type", type(error).__name__)
             self.current_span.end()
             self.current_span = None
@@ -277,9 +308,9 @@ class OTELCallbackHandler(BaseCallbackHandler):
 tools = [get_weather, get_forecast]
 
 prompt = ChatPromptTemplate.from_messages([
-    ("system", """You are a helpful weather assistant with full observability. You can:
+    ("system", """You are a helpful weather assistant powered by Azure OpenAI with full observability. You can:
 
-1. Get current weather for cities in India using the get_weather tool
+1. Get current weather for cities using the get_weather tool
 2. Get weather forecasts using the get_forecast tool
 
 When users ask about weather:
@@ -287,10 +318,11 @@ When users ask about weather:
 - Use get_forecast for future predictions
 - Be friendly and provide helpful context about the weather
 
-If asked about cities not in your database, let the user know which cities are available.
+Available cities: Mumbai, Delhi, Bangalore, Chennai, Kolkata, Hyderabad, Pune, New York, London, Tokyo
+
 Always be concise but informative in your responses.
 
-Note: All your operations are being traced for observability demonstration."""),
+Note: All operations are being traced with OpenTelemetry for observability demonstration."""),
     MessagesPlaceholder(variable_name="chat_history"),
     ("human", "{input}"),
     MessagesPlaceholder(variable_name="agent_scratchpad"),
@@ -303,16 +335,30 @@ Note: All your operations are being traced for observability demonstration."""),
 
 @cl.on_chat_start
 async def start():
-    """Initialize the LLM and agent with OTEL instrumentation."""
+    """Initialize the Azure OpenAI LLM and agent with OTEL instrumentation."""
     
-    # Create the LLM with OTEL callback
-    llm = ChatOllama(
-        model="qwen2.5:7b",
-        base_url="http://localhost:11434",
+    # Get Azure OpenAI configuration from environment variables
+    azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT", "https://sre-resources.openai.azure.com")
+    azure_api_key = os.environ.get("AZURE_OPENAI_API_KEY")
+    azure_deployment = os.environ.get("AZURE_OPENAI_DEPLOYMENT", "gpt-5.2")
+    azure_api_version = os.environ.get("AZURE_OPENAI_API_VERSION", "2025-04-01-preview")
+    
+    if not azure_api_key:
+        await cl.Message(
+            content="❌ Error: AZURE_OPENAI_API_KEY environment variable not set.\n\nPlease set it and restart the application."
+        ).send()
+        return
+    
+    # Create the Azure OpenAI LLM using LangChain (vendor-neutral SDK)
+    llm = AzureChatOpenAI(
+        azure_endpoint=azure_endpoint,
+        azure_deployment=azure_deployment,
+        api_version=azure_api_version,
+        api_key=azure_api_key,
         callbacks=[OTELCallbackHandler()],
     )
     
-    # Create the agent
+    # Create the agent using LangChain (open-source)
     agent = create_tool_calling_agent(llm, tools, prompt)
     
     # Create the executor
@@ -329,7 +375,17 @@ async def start():
     
     # Welcome message
     await cl.Message(
-        content="👋 Hello! I'm your weather assistant with **full observability**. Ask me about weather in Indian cities!\n\n📊 Check SigNoz at http://localhost:3301 to see traces, metrics, and logs."
+        content="""👋 Hello! I'm your weather assistant powered by **Azure OpenAI (GPT-5.2)** with full observability.
+
+Ask me about weather in cities like Mumbai, Delhi, New York, London, or Tokyo!
+
+📊 **Observability**: Check SigNoz at http://localhost:3301 to see traces, metrics, and logs.
+
+🔧 **Tech Stack**:
+- LangChain (vendor-neutral agent framework)
+- Chainlit (open-source web UI)
+- OpenTelemetry (vendor-neutral observability)
+- Azure OpenAI (LLM provider)"""
     ).send()
 
 
@@ -338,12 +394,19 @@ async def main(message: cl.Message):
     """Handle user messages with OTEL tracing."""
     
     agent_executor = cl.user_session.get("agent_executor")
+    
+    if not agent_executor:
+        await cl.Message(content="❌ Agent not initialized. Please check your Azure OpenAI configuration.").send()
+        return
+    
     chat_history = cl.user_session.get("chat_history")
     
     # Create a parent span for the entire request
     with tracer.start_as_current_span("agent_request") as span:
-        # SECURITY: Redact user input just in case
+        # SECURITY: User input is generally safe, but redact just in case
         span.set_attribute("user.input", safe_str(message.content, max_length=1000))
+        span.set_attribute("llm.provider", "azure_openai")
+        span.set_attribute("llm.model", "gpt-5.2")
         
         start_time = time.time()
         
@@ -365,7 +428,7 @@ async def main(message: cl.Message):
             span.set_attribute("agent.duration_ms", duration_ms)
             span.set_status(Status(StatusCode.OK))
             
-            request_latency.record(duration_ms, {"status": "success"})
+            request_latency.record(duration_ms, {"status": "success", "provider": "azure"})
             
             # Update chat history
             chat_history.append(("human", message.content))
@@ -377,33 +440,37 @@ async def main(message: cl.Message):
             await msg.update()
             
         except Exception as e:
-            # SECURITY: CRITICAL - Redact error messages, they may contain API keys
+            # SECURITY: CRITICAL - Error messages often contain API keys in URLs
             safe_error = redact_sensitive(str(e))
             span.set_status(Status(StatusCode.ERROR, safe_error))
+            # Don't use record_exception - it captures full stack which may have secrets
             span.set_attribute("error.type", type(e).__name__)
             span.set_attribute("error.message", safe_error)
-            request_latency.record((time.time() - start_time) * 1000, {"status": "error"})
+            request_latency.record((time.time() - start_time) * 1000, {"status": "error", "provider": "azure"})
             
+            # SECURITY: Redact error shown to user as well
             msg.content = f"❌ Error: {safe_error}"
             await msg.update()
 
 
 # =============================================================================
-# WHAT'S NOW VISIBLE IN SIGNOZ
+# OBSERVABILITY DATA IN SIGNOZ
 # =============================================================================
 #
 # After running this agent, check SigNoz at http://localhost:3301:
 #
 # TRACES:
 # - Parent span: agent_request (entire conversation turn)
-# - Child spans: llm_call (each LLM call)
+# - Child spans: llm_call (each Azure OpenAI call)
 # - Child spans: tool_get_weather, tool_get_forecast (tool calls)
-# - Attributes: model, tokens, latency, inputs, outputs
+# - Attributes: provider=azure_openai, model=gpt-5.2, tokens, latency
 #
 # METRICS:
-# - agent.tokens.total: Total tokens used (counter)
-# - agent.request.latency: Request latency distribution (histogram)
-# - agent.tool.calls: Tool call counts by tool name (counter)
+# - agent.tokens.total: Total tokens used
+# - agent.tokens.input: Input/prompt tokens
+# - agent.tokens.output: Output/completion tokens
+# - agent.request.latency: Request latency distribution
+# - agent.tool.calls: Tool call counts by tool name
 #
-# This is the "GLASS BOX" - full visibility into agent behavior!
+# All using vendor-neutral, open-source SDKs!
 # =============================================================================

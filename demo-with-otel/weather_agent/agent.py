@@ -28,7 +28,7 @@ from google.adk.models.lite_llm import LiteLlm
 from google.adk.tools import FunctionTool
 
 # Import our OTEL setup - this initializes tracing/metrics at import time
-from .otel_setup import tracer, agent_metrics, logger, Status, StatusCode
+from .otel_setup import tracer, agent_metrics, logger, Status, StatusCode, redact_sensitive, safe_str
 
 
 # -----------------------------------------------------------------------------
@@ -53,12 +53,12 @@ def instrumented_tool(func):
         
         # Create a span for this tool call
         with tracer.start_as_current_span(f"tool_{tool_name}") as span:
-            # Record tool metadata
+            # Record tool metadata (SECURITY: redact sensitive data)
             span.set_attribute("tool.name", tool_name)
-            span.set_attribute("tool.inputs", str(kwargs))
+            span.set_attribute("tool.inputs", safe_str(kwargs))
             
-            # Log the tool call
-            logger.info(f"Tool called: {tool_name} with {kwargs}")
+            # Log the tool call (SECURITY: redact sensitive data)
+            logger.info(f"Tool called: {tool_name} with {safe_str(kwargs)}")
             
             # Record metric
             agent_metrics["tool_calls"].add(1, {"tool": tool_name})
@@ -69,8 +69,8 @@ def instrumented_tool(func):
                 result = func(*args, **kwargs)
                 duration_ms = (time.time() - start_time) * 1000
                 
-                # Record result and timing
-                span.set_attribute("tool.output", str(result)[:500])  # Truncate long outputs
+                # Record result and timing (SECURITY: redact sensitive data)
+                span.set_attribute("tool.output", safe_str(result))
                 span.set_attribute("tool.duration_ms", duration_ms)
                 span.set_status(Status(StatusCode.OK))
                 
@@ -79,11 +79,12 @@ def instrumented_tool(func):
                 return result
                 
             except Exception as e:
-                # Record error
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                span.record_exception(e)
+                # SECURITY: Redact error messages - they may contain API keys
+                safe_error = redact_sensitive(str(e))
+                span.set_status(Status(StatusCode.ERROR, safe_error))
+                span.set_attribute("error.type", type(e).__name__)
                 agent_metrics["errors"].add(1, {"tool": tool_name, "error_type": type(e).__name__})
-                logger.error(f"Tool {tool_name} failed: {e}")
+                logger.error(f"Tool {tool_name} failed: {safe_error}")
                 raise
     
     return wrapper
