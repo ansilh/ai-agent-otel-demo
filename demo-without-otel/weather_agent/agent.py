@@ -18,8 +18,8 @@ from google.adk.agents import Agent
 # Import Gemini model for LLM capabilities
 from google.adk.models.lite_llm import LiteLlm
 
-# Import tool decorator to define functions the agent can call
-from google.adk.tools import tool
+# Import FunctionTool to wrap our functions as tools
+from google.adk.tools import FunctionTool
 
 
 # -----------------------------------------------------------------------------
@@ -27,8 +27,8 @@ from google.adk.tools import tool
 # -----------------------------------------------------------------------------
 # Tools are functions that the agent can decide to call based on user queries.
 # The agent doesn't know real-time data, but it can call tools to get it.
+# In ADK, we define plain functions and wrap them with FunctionTool.
 
-@tool
 def get_weather(city: str) -> str:
     """
     Get the current weather for a specified city.
@@ -62,7 +62,6 @@ def get_weather(city: str) -> str:
         return f"Weather data not available for {city}. Available cities: {', '.join(weather_data.keys())}"
 
 
-@tool
 def get_forecast(city: str, days: int = 3) -> str:
     """
     Get weather forecast for the next few days.
@@ -122,7 +121,8 @@ If asked about cities not in your database, let the user know which cities are a
 Always be concise but informative in your responses.""",
     
     # Register the tools this agent can use
-    tools=[get_weather, get_forecast],
+    # Wrap functions with FunctionTool for ADK
+    tools=[FunctionTool(func=get_weather), FunctionTool(func=get_forecast)],
 )
 
 

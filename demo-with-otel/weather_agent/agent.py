@@ -25,7 +25,7 @@ from functools import wraps
 # ADK imports
 from google.adk.agents import Agent
 from google.adk.models.lite_llm import LiteLlm
-from google.adk.tools import tool
+from google.adk.tools import FunctionTool
 
 # Import our OTEL setup - this initializes tracing/metrics at import time
 from .otel_setup import tracer, agent_metrics, logger, Status, StatusCode
@@ -93,7 +93,6 @@ def instrumented_tool(func):
 # Define Instrumented Tools
 # -----------------------------------------------------------------------------
 
-@tool
 @instrumented_tool
 def get_weather(city: str) -> str:
     """
@@ -123,7 +122,6 @@ def get_weather(city: str) -> str:
         return f"Weather data not available for {city}. Available cities: {', '.join(weather_data.keys())}"
 
 
-@tool
 @instrumented_tool
 def get_forecast(city: str, days: int = 3) -> str:
     """
@@ -240,7 +238,7 @@ Always be concise but informative in your responses.
 
 Note: All your operations are being traced for observability demonstration.""",
     
-    tools=[get_weather, get_forecast],
+    tools=[FunctionTool(func=get_weather), FunctionTool(func=get_forecast)],
 )
 
 
