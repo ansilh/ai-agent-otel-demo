@@ -1,4 +1,3 @@
-ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
-google-adk 1.26.0 requires opentelemetry-api<1.39.0,>=1.36.0, but you have opentelemetry-api 1.40.0 which is incompatible.
-google-adk 1.26.0 requires opentelemetry-sdk<1.39.0,>=1.36.0, but you have opentelemetry-sdk 1.40.0 which is incompatible.
-opentelemetry-exporter-gcp-logging 1.11.0a0 requires opentelemetry-sdk<1.39.0,>=1.35.0, but you have opentelemetry-sdk 1.40.0 which is incompatible.
+  File "/home/ansil/ai-agent-otel-demo/demo-with-otel/weather_agent/agent.py", line 28, in <module>
+    from google.adk.tools import tool
+ImportError: Fail to load 'weather_agent.agent' module. cannot import name 'tool' from 'google.adk.tools' (/home/ansil/ai-agent-otel-demo/venv/lib/python3.12/site-packages/google/adk/tools/__init__.py)
